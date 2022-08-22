@@ -21,9 +21,9 @@ namespace SmokeMaster.Server.Hubs
       await base.OnConnectedAsync();
     }
 
-    public async Task Example(int fanSpeed)
+    public async Task SetTemperatureCommand(double temperature)
     {
-      await mSmokerDataService.SetFanSpeed(Convert.ToUInt32(fanSpeed));
+      await mSmokerDataService.SetTemperatureCommand(temperature);
     }
   }
 
@@ -56,6 +56,12 @@ namespace SmokeMaster.Server.Hubs
     private readonly IHubContext<UiHub, ISmokerClient> mUiHub;
     private readonly UdpClient mTemperatureClient = new();
     private readonly TcpClient mPigsControl = new();
+    
+    private double mSetTemperature;
+    private double mActualTemperature;
+    private double mFanSpeed;
+
+    private static readonly double mProportionalConstant = 1.0;
 
     public UiData UiData { get; set; } = new UiData();
 
@@ -74,14 +80,35 @@ namespace SmokeMaster.Server.Hubs
       while (true)
       {
         var wFrame = await mTemperatureClient.ReceiveAsync(stoppingToken);
-        UiData.InnerTemperature = Convert.ToDouble(System.Text.Encoding.UTF8.GetString(wFrame.Buffer));
+        mActualTemperature = Convert.ToDouble(System.Text.Encoding.UTF8.GetString(wFrame.Buffer));
+
+        await ComputeAndSetFanSpeed();
+
+        UiData.InnerTemperature = mActualTemperature;
+        UiData.FanSpeedPct = 100.0 * mFanSpeed / 255.0;
         await mUiHub.Clients.All.UpdateUiData(UiData);
       }
     }
 
-    public async Task SetFanSpeed(uint fanSpeed)
+    public async Task SetTemperatureCommand(double temperature)
     {
-      var wCommand = new PigsCommand() { mCommand = 5, mParam1 = 12, mParam2 = fanSpeed, mParam3 = 0 };
+      mSetTemperature = temperature;
+
+      await ComputeAndSetFanSpeed();
+
+      UiData.SetTemperature = mSetTemperature;
+      UiData.FanSpeedPct = 100.0 * mFanSpeed / 255.0;
+      await mUiHub.Clients.All.UpdateUiData(UiData);
+    }
+
+    private async Task ComputeAndSetFanSpeed()
+    {
+      var wError = mSetTemperature - mActualTemperature;
+      var wProportionalFactor = wError * mProportionalConstant;
+
+      mFanSpeed = Math.Clamp(wProportionalFactor, 0, double.MaxValue);
+
+      var wCommand = new PigsCommand() { mCommand = 5, mParam1 = 12, mParam2 = Math.Clamp(Convert.ToUInt32(mFanSpeed), 0, 100), mParam3 = 0 };
       await mPigsControl.GetStream().WriteAsync(wCommand.ToByteArray());
       await mPigsControl.GetStream().ReadAsync(new byte[Marshal.SizeOf(typeof(PigsCommand))]);
     }

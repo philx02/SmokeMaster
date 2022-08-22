@@ -18,9 +18,9 @@ else
 }
 
 @code {
-  private HubConnection? mHubConnection;
+  private HubConnection mHubConnection;
   private UiData? mUiData;
-  private string mInput;
+  private string mInput = string.Empty;
 
   protected override async Task OnInitializedAsync()
   {
@@ -40,6 +40,6 @@ else
 
   private async Task OnButtonPush()
   {
-    await mHubConnection?.InvokeAsync("Example", Convert.ToInt32(mInput));
+    await mHubConnection.InvokeAsync("SetTemperatureCommand", Convert.ToDouble(mInput));
   }
 }
