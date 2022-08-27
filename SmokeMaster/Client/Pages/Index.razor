@@ -12,20 +12,81 @@
 }
 else
 {
-  <div class="w-screen">
+  <div class="p-5 w-screen">
     <div class="flex flex-row justify-center">
-      <div class="p-5 w-72 text-center text-7xl">@(mUiData.SetTemperature.ToString("N1"))</div>
-      <div class="p-5 w-72 text-center text-7xl">@(mUiData.InnerTemperature.ToString("N1"))</div>
+      <div class="flex flex-col">
+        <div class="text-center">Set Temperature</div>
+        <div data-bs-toggle="modal" data-bs-target="#setTemperatureModal" @onclick="() => { mFormatException = false; }" class="flex flex-row p-5 w-40 justify-center cursor-pointer">
+          <div class="text-center text-5xl font-mono">@DisplayTemperature(mUiData.SetTemperature, "N0")</div>
+          <div>&#176;@(mFreedomUnits ? "F" : "C")</div>
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <div class="text-center">Actual Temperature</div>
+        <div class="flex flex-row p-5 w-40 justify-center">
+          <div class="text-center text-5xl font-mono">@DisplayTemperature(mUiData.InnerTemperature, "N1")</div>
+          <div>&#176;@(mFreedomUnits ? "F" : "C")</div>
+        </div>
+      </div>
     </div>
-    <input type="text" @bind-value="mInput" class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" id="exampleFormControlInput1" placeholder="Example label" />
-    <button type="button" @onclick="() => OnButtonPush()" class="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out">Allo</button>
+    <div class="flex flex-col justify-center">
+      <div class="text-center">Blower Power</div>
+      <div class="flex flex-row p-5 justify-center">
+        <div class="text-center text-5xl font-mono">@(mUiData.FanSpeedPct.ToString("N1"))</div>
+        <div>%</div>
+      </div>
+    </div>
+    <div class="flex justify-center">
+      <div class="form-check form-switch">
+        <input @bind="mFreedomUnits" class="form-check-input appearance-none w-9 -ml-10 rounded-full float-left h-5 align-top bg-white bg-no-repeat bg-contain bg-gray-300 focus:outline-none cursor-pointer shadow-sm" type="checkbox" id="flexSwitchFreedomUnits">
+        <label class="form-check-label inline-block" for="flexSwitchCheckDefault">Freedom Units</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="setTemperatureModal" tabindex="-1" aria-labelledby="setTemperatureModalLabel" aria-hidden="true" class="modal fade fixed top-0 left-0 hidden w-full h-full outline-none overflow-x-hidden overflow-y-auto">
+    <div class="modal-dialog relative w-auto pointer-events-none dark:bg-neutral-800">
+      <div class="modal-content border-none shadow-lg relative flex flex-col w-full pointer-events-auto bg-clip-padding rounded-md outline-none text-current">
+        <div class="modal-header flex flex-shrink-0 items-center justify-between p-4 border-b border-gray-200 rounded-t-md">
+          <h5 class="text-xl font-medium leading-normal" id="setTemperatureModalLabel">Set Temperature</h5>
+          <button type="button" class="text-xl btn-close box-content text-white border-none rounded-none opacity-50 focus:shadow-none focus:outline-none focus:opacity-100 hover:text-white hover:opacity-75 hover:no-underline" data-bs-dismiss="modal" aria-label="Close"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+        <div class="modal-body relative p-4">
+          <div class="flex justify-center">
+            <div class="mb-3 xl:w-96">
+              <label for="enterDesiredTemperature" class="form-label inline-block mb-2">Enter desired temperature</label>
+               <input type="text" inputmode="numeric" @bind="mTemperatureEntry" id="enterDesiredTemperature" placeholder="Temperature (°@(mFreedomUnits ? "F" : "C"))" class="form-control block w-full px-3 py-1.5 text-base font-normal text-gray-700 bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"/>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer flex flex-shrink-0 flex-wrap items-center justify-end p-4 border-t border-gray-200 rounded-b-md">
+          <button type="button" data-bs-dismiss="modal" @onclick="() => { mTemperatureEntry = string.Empty; }" class="px-6 py-2.5 bg-purple-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-purple-700 hover:shadow-lg focus:bg-purple-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-purple-800 active:shadow-lg transition duration-150 ease-in-out">Close</button>
+          <button type="button" data-bs-dismiss="modal" @onclick="SetNewTemperature" class="px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out ml-1">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex w-full justify-center @VisibleIf(mFormatException)">
+    <div class="alert bg-yellow-100 rounded-lg py-5 px-6 mb-3 text-base text-yellow-700 inline-flex items-center w-96 alert-dismissible fade show" role="alert">
+      <strong class="mr-1">Invalid Temperature</strong>
+      <button type="button" @onclick="() => { mFormatException = false; }" class="text-xl btn-close box-content ml-auto text-yellow-900 border-none rounded-none opacity-50 focus:shadow-none focus:outline-none focus:opacity-100 hover:text-yellow-900 hover:opacity-75 hover:no-underline" data-bs-dismiss="alert" aria-label="Close"><i class="fa-solid fa-circle-xmark"></i></button>
+    </div>
   </div>
 }
 
 @code {
   private HubConnection mHubConnection;
   private UiData? mUiData;
-  private string mInput = string.Empty;
+  private string mTemperatureEntry = string.Empty;
+  private bool mFreedomUnits;
+  private bool mFormatException;
+
+  private string VisibleIf(bool condition)
+  {
+    return condition ? string.Empty : "invisible";
+  }
 
   protected override async Task OnInitializedAsync()
   {
@@ -43,8 +104,23 @@ else
     await mHubConnection.StartAsync();
   }
 
-  private async Task OnButtonPush()
+  private string DisplayTemperature(double metricTemperature, string format)
   {
-    await mHubConnection.InvokeAsync("SetTemperatureCommand", Convert.ToDouble(mInput));
+    var temperature = mFreedomUnits ? metricTemperature * 9 / 5 + 32 : metricTemperature;
+    return temperature.ToString(format);
+  }
+
+  private async Task SetNewTemperature()
+  {
+    try
+    {
+      var temperature = Convert.ToDouble(mTemperatureEntry);
+      await mHubConnection.InvokeAsync("SetTemperatureCommand", mFreedomUnits ? (temperature - 32) * 5 / 9 : temperature);
+    }
+    catch (FormatException)
+    {
+      mFormatException = true;
+    }
+    mTemperatureEntry = string.Empty;
   }
 }
