@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using SmokeMaster.Shared;
 using System.Net;
 using System.Net.Sockets;
@@ -108,7 +108,7 @@ namespace SmokeMaster.Server.Hubs
 
       mFanSpeed = Math.Clamp(wProportionalFactor, 0, double.MaxValue);
 
-      var wCommand = new PigsCommand() { mCommand = 5, mParam1 = 12, mParam2 = Math.Clamp(Convert.ToUInt32(mFanSpeed), 0, 100), mParam3 = 0 };
+      var wCommand = new PigsCommand() { mCommand = 5, mParam1 = 17, mParam2 = Math.Clamp(Convert.ToUInt32(mFanSpeed), 0, 100), mParam3 = 0 };
       await mPigsControl.GetStream().WriteAsync(wCommand.ToByteArray());
       await mPigsControl.GetStream().ReadAsync(new byte[Marshal.SizeOf(typeof(PigsCommand))]);
     }
