@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using SmokeMaster.Shared;
 using System.Net;
 using System.Net.Sockets;
@@ -72,7 +72,7 @@ namespace SmokeMaster.Server.Hubs
       mTemperatureClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
       mTemperatureClient.Client.Bind(new IPEndPoint(IPAddress.Any, 14587));
       mTemperatureClient.JoinMulticastGroup(IPAddress.Parse("224.0.0.1"));
-      mPigsControl.Connect(new IPEndPoint(IPAddress.Parse("192.168.3.241"), 8888));
+      //mPigsControl.Connect(new IPEndPoint(IPAddress.Parse("192.168.3.241"), 8888));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
